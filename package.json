@@ -1,14 +1,12 @@
 
-
-
-
 {
   "name": "rpg-server",
   "version": "1.0.0",
   "description": "RPG game backend to save tokens, upgrades, and stats",
-  "main": "server.js",
+  "main": "index.js",
+  "type": "module",
   "scripts": {
-    "start": "node server.js"
+    "start": "node index.js"
   },
   "engines": {
     "node": ">=18.0.0"
