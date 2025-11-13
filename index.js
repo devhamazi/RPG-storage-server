@@ -1,48 +1,40 @@
-
-
-
-
+// index.js
 import express from "express";
-import cors from "cors";
 import { MongoClient } from "mongodb";
-import dotenv from "dotenv";
-dotenv.config();
 
+// === Ensure environment variable is set ===
+const mongoUri = process.env.MONGO_URI;
+if (!mongoUri) {
+  console.error("❌ Error: MONGO_URI environment variable is not set");
+  process.exit(1);
+}
+
+// === Create Express app ===
 const app = express();
-app.use(cors());
 app.use(express.json());
 
-const client = new MongoClient(process.env.MONGO_URI);
-await client.connect();
-const db = client.db("rpg_game");
-const players = db.collection("players");
-
-const PORT = process.env.PORT || 3000;
-
-// === Get player info ===
-app.get("/player/:id", async (req,res)=>{
-  const player = await players.findOne({_id:req.params.id});
-  if(player) res.json(player);
-  else {
-    // If player doesn't exist, create default
-    const newPlayer = {
-      _id: req.params.id,
-      tokens: 1000,
-      hp: 200,
-      mp: 50,
-      attackUpgrade: 0,
-      specialUpgrade: 0
-    };
-    await players.insertOne(newPlayer);
-    res.json(newPlayer);
+// === Connect to MongoDB ===
+let dbClient;
+async function connectMongo() {
+  try {
+    dbClient = new MongoClient(mongoUri);
+    await dbClient.connect();
+    console.log("✅ Connected to MongoDB!");
+  } catch (err) {
+    console.error("❌ MongoDB connection error:", err.message);
+    process.exit(1);
   }
+}
+
+// === Simple test route ===
+app.get("/", (req, res) => {
+  res.send("Server is running!");
 });
 
-// === Update player info ===
-app.post("/player/:id", async (req,res)=>{
-  const update = req.body;
-  await players.updateOne({_id:req.params.id}, { $set: update }, { upsert:true });
-  res.json({ ok:true });
+// === Start server after MongoDB connects ===
+const PORT = process.env.PORT || 3000;
+connectMongo().then(() => {
+  app.listen(PORT, () => {
+    console.log(`🚀 Server listening on port ${PORT}`);
+  });
 });
-
-app.listen(PORT, ()=>console.log(`Server running on port ${PORT}`));
